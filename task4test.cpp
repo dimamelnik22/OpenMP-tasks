@@ -1,17 +1,20 @@
 #include <omp.h>
-#include <iostream>
 #include <ctime>
+#include <cstdlib>
+#include <stdio.h>
 
 int** ProductLine(int** A, int** B, int heightA, int size, int lengthB, bool threading);
 int** ProductBlock(int** A, int** B, int heightA, int size, int lengthB, bool threading);
 double runtime = 0;
+int numOfThreads =0;
 
 int main()
 {
 	srand(time(0));
-	int heightA = 1000;
-	int size = 1000;
-	int lengthB = 1000;
+	int n = 100;
+	int heightA = n;
+	int size = n;
+	int lengthB = n;
 	int** A = new int* [heightA];
 	for (int i = 0; i < heightA; ++i)
 	{
@@ -27,23 +30,88 @@ int main()
 			B[i][j] = rand() % 100;
 	}
 	int** C;
-
-	C = ProductLine(A, B, heightA, size, lengthB, true);
-	printf("First element: %d, last element: %d\n", C[0][0], C[heightA - 1][lengthB - 1]);
-	printf("Parallel line time: %f\n", runtime);
-
+	printf("Parallel line\n");
+	for (numOfThreads = 1; numOfThreads <= 16; ++numOfThreads)
+	{
+		C = ProductLine(A, B, heightA, size, lengthB, true);
+		printf("%f\n", runtime);
+	}
+	printf("Parallel block\n");
+	for (numOfThreads = 1; numOfThreads <= 16; ++numOfThreads)
+	{
+		C = ProductBlock(A, B, heightA, size, lengthB, true);
+		printf("%f\n", runtime);
+	}
 	C = ProductLine(A, B, heightA, size, lengthB, false);
-	printf("First element: %d, last element: %d\n", C[0][0], C[heightA - 1][lengthB - 1]);
-	printf("Linear line time: %f\n", runtime);
+	printf("Linear time: %f\n", runtime);
 
-	C = ProductBlock(A, B, heightA, size, lengthB, true);
-	printf("First element: %d, last element: %d\n", C[0][0], C[heightA - 1][lengthB - 1]);
-	printf("Parallel block time: %f\n", runtime);
+	n = 500;
+	heightA = n;
+	size = n;
+	lengthB = n;
+	A = new int* [heightA];
+	for (int i = 0; i < heightA; ++i)
+	{
+		A[i] = new int[size];
+		for (int j = 0; j < size; ++j)
+			A[i][j] = rand() % 100;
+	}
+	B = new int* [size];
+	for (int i = 0; i < size; ++i)
+	{
+		B[i] = new int[lengthB];
+		for (int j = 0; j < lengthB; ++j)
+			B[i][j] = rand() % 100;
+	}
+	C;
+	printf("Parallel line\n");
+	for (numOfThreads = 1; numOfThreads <= 16; ++numOfThreads)
+	{
+		C = ProductLine(A, B, heightA, size, lengthB, true);
+		printf("%f\n", runtime);
+	}
+	printf("Parallel block\n");
+	for (numOfThreads = 1; numOfThreads <= 16; ++numOfThreads)
+	{
+		C = ProductBlock(A, B, heightA, size, lengthB, true);
+		printf("%f\n", runtime);
+	}
+	C = ProductLine(A, B, heightA, size, lengthB, false);
+	printf("Linear time: %f\n", runtime);
 
-	C = ProductBlock(A, B, heightA, size, lengthB, false);
-	printf("First element: %d, last element: %d\n", C[0][0], C[heightA - 1][lengthB - 1]);
-	printf("Linear block time: %f\n", runtime);
-
+	n = 1000;
+	heightA = n;
+	size = n;
+	lengthB = n;
+	A = new int* [heightA];
+	for (int i = 0; i < heightA; ++i)
+	{
+		A[i] = new int[size];
+		for (int j = 0; j < size; ++j)
+			A[i][j] = rand() % 100;
+	}
+	B = new int* [size];
+	for (int i = 0; i < size; ++i)
+	{
+		B[i] = new int[lengthB];
+		for (int j = 0; j < lengthB; ++j)
+			B[i][j] = rand() % 100;
+	}
+	C;
+	printf("Parallel line\n");
+	for (numOfThreads = 1; numOfThreads <= 16; ++numOfThreads)
+	{
+		C = ProductLine(A, B, heightA, size, lengthB, true);
+		printf("%f\n", runtime);
+	}
+	printf("Parallel block\n");
+	for (numOfThreads = 1; numOfThreads <= 16; ++numOfThreads)
+	{
+		C = ProductBlock(A, B, heightA, size, lengthB, true);
+		printf("%f\n", runtime);
+	}
+	C = ProductLine(A, B, heightA, size, lengthB, false);
+	printf("Linear time: %f\n", runtime);
 	return 0;
 }
 
@@ -55,7 +123,7 @@ int** ProductLine(int** A, int** B, int heightA, int size, int lengthB, bool thr
 		C[i] = new int[lengthB];
 	
 	runtime = omp_get_wtime();
-#pragma omp parallel if(threading)
+#pragma omp parallel if(threading) num_threads(numOfThreads) 
 	{
 		int lineWidth = heightA / omp_get_num_threads();
 #pragma omp for
@@ -85,7 +153,7 @@ int** ProductBlock(int** A, int** B, int heightA, int size, int lengthB, bool th
 		C[i] = new int[lengthB];
 
 	runtime = omp_get_wtime();
-#pragma omp parallel if(threading)
+#pragma omp parallel if(threading) num_threads(numOfThreads) 
 	{
 		int blockHeight = heightA / omp_get_num_threads();
 		int blockWidth = lengthB / omp_get_num_threads();
